@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>EduMentor Demo</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width:800px; margin:2rem auto; }
+    input, select, textarea { width:100%; padding:8px; margin:6px 0; }
+    button { padding:10px 16px; margin-top:8px; }
+    .card { border:1px solid #ddd; padding:12px; margin:12px 0; border-radius:6px; }
+  </style>
+</head>
+<body>
+  <h1>EduMentor — Demo UI</h1>
+
+  <div class="card">
+    <h3>Register Student</h3>
+    <input id="student_id" placeholder="student id (e.g., s1)" value="s1"/>
+    <input id="student_name" placeholder="name" value="Anshul"/>
+    <input id="student_grade" placeholder="grade" value="8"/>
+    <button onclick="register()">Register</button>
+    <div id="reg_resp"></div>
+  </div>
+
+  <div class="card">
+    <h3>Create Lesson</h3>
+    <input id="topic" placeholder="topic" value="Linear Equations"/>
+    <select id="difficulty"><option>easy</option><option selected>medium</option><option>hard</option></select>
+    <button onclick="createLesson()">Generate Lesson</button>
+    <pre id="lesson_area"></pre>
+  </div>
+
+  <div class="card">
+    <h3>Submit Answer (demo: submit text matching expected answer)</h3>
+    <input id="lesson_id_in" placeholder="lesson id"/>
+    <textarea id="answer_text" rows="3">main idea</textarea>
+    <button onclick="submitAnswer()">Submit Answer</button>
+    <pre id="eval_area"></pre>
+  </div>
+
+  <div class="card">
+    <h3>View Student Progress</h3>
+    <button onclick="viewProgress()">Refresh Progress</button>
+    <pre id="progress_area"></pre>
+  </div>
+
+<script>
+const base = "http://localhost:8000";
+
+async function register(){
+  const id = document.getElementById("student_id").value;
+  const name = document.getElementById("student_name").value;
+  const grade = parseInt(document.getElementById("student_grade").value||"6");
+  const resp = await fetch(base+"/register_student", {method:"POST", headers: {'Content-Type':'application/json'}, body: JSON.stringify({student_id:id, name:name, grade:grade})});
+  document.getElementById("reg_resp").innerText = await resp.text();
+}
+
+async function createLesson(){
+  const id = document.getElementById("student_id").value;
+  const topic = document.getElementById("topic").value;
+  const diff = document.getElementById("difficulty").value;
+  const resp = await fetch(base+"/generate_lesson", {method:"POST", headers:{'Content-Type':'application/json'}, body: JSON.stringify({student_id:id, topic:topic, difficulty:diff})});
+  const data = await resp.json();
+  document.getElementById("lesson_area").innerText = JSON.stringify(data, null, 2);
+  document.getElementById("lesson_id_in").value = data.lesson_id || "";
+}
+
+async function submitAnswer(){
+  const id = document.getElementById("student_id").value;
+  const lesson_id = document.getElementById("lesson_id_in").value;
+  const answer = document.getElementById("answer_text").value;
+  const resp = await fetch(base+"/submit_answer", {method:"POST", headers:{'Content-Type':'application/json'}, body: JSON.stringify({student_id:id, lesson_id:lesson_id, answer:answer})});
+  const data = await resp.json();
+  document.getElementById("eval_area").innerText = JSON.stringify(data, null, 2);
+}
+
+async function viewProgress(){
+  const id = document.getElementById("student_id").value;
+  const resp = await fetch(base+"/student_progress/"+encodeURIComponent(id));
+  const data = await resp.json();
+  document.getElementById("progress_area").innerText = JSON.stringify(data, null, 2);
+}
+</script>
+</body>
+</html>
